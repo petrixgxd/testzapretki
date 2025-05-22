@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Элементы интерфейса
     const startScreen = document.getElementById('start-screen');
     const quizScreen = document.getElementById('quiz-screen');
     const resultScreen = document.getElementById('result-screen');
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
 
-    // Данные и состояние
     let allQuestions = {};
     let shuffledQuestions = [];
     let currentQuestionIndex = 0;
@@ -23,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let userAnswers = [];
     let totalQuestions = 0;
 
-    // Встроенные вопросы (на случай проблем с загрузкой)
     const defaultQuestions = {
         "Терминология": [
             {
@@ -37,9 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ]
     };
 
-    // Загрузка вопросов
     function loadQuestions() {
-        // Пробуем загрузить из JSON
         return fetch('zapretki.json')
             .then(response => {
                 if (!response.ok) throw new Error('Network response was not ok');
@@ -51,14 +46,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Инициализация приложения
     async function init() {
         allQuestions = await loadQuestions();
         populateCategorySelect();
         updateQuestionCountOptions();
     }
 
-    // Заполнение выбора категорий
     function populateCategorySelect() {
         categorySelect.innerHTML = '';
         
@@ -73,7 +66,6 @@ document.addEventListener('DOMContentLoaded', function() {
         categorySelect.selectedIndex = 0;
     }
 
-    // Обновление количества вопросов
     function updateQuestionCountOptions() {
         questionCountSelect.innerHTML = '';
 
@@ -88,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
             maxQuestions = allQuestions[selectedCategory].length;
         }
 
-        // Максимальное количество вопросов - до 100 или все доступные
         maxQuestions = Math.min(maxQuestions, 100);
 
         for (let i = 1; i <= maxQuestions; i++) {
@@ -96,16 +87,13 @@ document.addEventListener('DOMContentLoaded', function() {
             questionCountSelect.add(option);
         }
 
-        // Устанавливаем либо 30, либо максимальное количество, если их меньше
         questionCountSelect.value = Math.min(30, maxQuestions);
     }
 
-    // Начало теста
     function startQuiz() {
         const selectedCategory = categorySelect.value;
         totalQuestions = parseInt(questionCountSelect.value);
 
-        // Собираем все вопросы из выбранной категории
         let questions = [];
         if (selectedCategory === 'all') {
             for (const category in allQuestions) {
@@ -114,16 +102,13 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             questions = allQuestions[selectedCategory];
         }
-
-        // Если запрошено больше, чем есть - берем все
+        
         totalQuestions = Math.min(totalQuestions, questions.length);
 
-        // Перемешиваем вопросы
         shuffledQuestions = [...questions]
             .sort(() => Math.random() - 0.5)
             .slice(0, totalQuestions);
 
-        // Перемешиваем ответы для каждого вопроса
         shuffledQuestions.forEach(question => {
             const answers = [
                 { text: question.answer1, correct: question.correct === 'answer1' },
@@ -135,19 +120,16 @@ document.addEventListener('DOMContentLoaded', function() {
             question.shuffledAnswers = answers.sort(() => Math.random() - 0.5);
         });
 
-        // Сбрасываем состояние
         currentQuestionIndex = 0;
         score = 0;
         userAnswers = [];
         
-        // Показываем первый вопрос
         startScreen.classList.add('hidden');
         quizScreen.classList.remove('hidden');
         resultScreen.classList.add('hidden');
         showQuestion();
     }
 
-    // Показ вопроса
     function showQuestion() {
         resetState();
         const question = shuffledQuestions[currentQuestionIndex];
@@ -165,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateProgress();
     }
 
-    // Очистка состояния
     function resetState() {
         nextBtn.classList.add('hidden');
         while (answersContainer.firstChild) {
@@ -173,12 +154,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Обработка выбора ответа
     function selectAnswer(e) {
         const selectedButton = e.target;
         const isCorrect = selectedButton.dataset.correct === 'true';
         
-        // Сохраняем ответ пользователя
         userAnswers.push({
             question: shuffledQuestions[currentQuestionIndex].question,
             userAnswer: selectedButton.textContent,
@@ -186,7 +165,6 @@ document.addEventListener('DOMContentLoaded', function() {
             isCorrect: isCorrect
         });
         
-        // Подсвечиваем ответы
         Array.from(answersContainer.children).forEach(button => {
             button.disabled = true;
             button.classList.add(button.dataset.correct === 'true' ? 'correct' : 'wrong');
@@ -194,14 +172,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (isCorrect) score++;
         
-        // Показываем кнопку "Далее" или "Завершить"
         nextBtn.classList.remove('hidden');
         if (currentQuestionIndex === shuffledQuestions.length - 1) {
             nextBtn.textContent = 'Завершить';
         }
     }
 
-    // Переход к следующему вопросу
     function goToNextQuestion() {
         currentQuestionIndex++;
         if (currentQuestionIndex < shuffledQuestions.length) {
@@ -211,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Показ результатов
     function showResults() {
         quizScreen.classList.add('hidden');
         resultScreen.classList.remove('hidden');
@@ -219,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const percentage = Math.round((score / totalQuestions) * 100);
         resultText.textContent = `Вы ответили правильно на ${score} из ${totalQuestions} вопросов (${percentage}%)`;
         
-        // Показываем неправильные ответы
         wrongAnswersList.innerHTML = '';
         userAnswers.forEach((answer, index) => {
             if (!answer.isCorrect) {
@@ -235,25 +209,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Перезапуск теста
     function restartQuiz() {
         resultScreen.classList.add('hidden');
         startScreen.classList.remove('hidden');
     }
 
-    // Обновление прогресса
     function updateProgress() {
         const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
         progressBar.style.width = `${progress}%`;
         progressText.textContent = `Вопрос ${currentQuestionIndex + 1} из ${totalQuestions}`;
     }
 
-    // Обработчики событий
     startBtn.addEventListener('click', startQuiz);
     nextBtn.addEventListener('click', goToNextQuestion);
     restartBtn.addEventListener('click', restartQuiz);
     categorySelect.addEventListener('change', updateQuestionCountOptions);
 
-    // Инициализация
     init();
 });
